@@ -1,0 +1,103 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "VP Program Event API",
+    "version": "0.1.0",
+    "description": "Backend-to-VP HTTP proof-of-concept contract. The VP program logs requested workflow operations."
+  },
+  "servers": [
+    { "url": "http://localhost:9100" }
+  ],
+  "paths": {
+    "/vp/events": {
+      "post": {
+        "operationId": "deliverVisualEvent",
+        "summary": "Deliver one workflow lifecycle event to the VP program",
+        "security": [{ "backendServiceJwt": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VisualEvent" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event handler completed, failed permanently, or was already handled.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResult" }
+              }
+            }
+          },
+          "400": { "description": "Invalid event payload." },
+          "401": { "description": "Missing or invalid backend service JWT." },
+          "500": { "description": "Event handler failed; the backend outbox can retry." }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "getVpHealth",
+        "responses": {
+          "200": { "description": "Worker is healthy." },
+          "503": { "description": "Worker is stopping." }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "getVpOpenApiDocument",
+        "responses": {
+          "200": { "description": "The VP program HTTP OpenAPI document." }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "backendServiceJwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "VisualEvent": {
+        "type": "object",
+        "required": [
+          "contractVersion", "eventId", "workflowExecutionId", "activityId",
+          "event", "occurredAt", "correlationId", "chainId", "chainDepth"
+        ],
+        "properties": {
+          "contractVersion": { "const": 1 },
+          "eventId": { "type": "string", "format": "uuid" },
+          "workflowExecutionId": { "type": "string", "format": "uuid" },
+          "activityId": { "type": "string", "format": "uuid" },
+          "workflowActivityExecutionId": { "type": "string", "format": "uuid" },
+          "event": {
+            "type": "string",
+            "enum": ["onEnter", "onStart", "onAssign", "onComplete", "onError"]
+          },
+          "actorUserId": { "type": "string", "format": "uuid" },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "correlationId": { "type": "string", "format": "uuid" },
+          "chainId": { "type": "string", "format": "uuid" },
+          "causationEventId": { "type": "string", "format": "uuid" },
+          "chainDepth": { "type": "integer", "minimum": 0, "maximum": 32 }
+        }
+      },
+      "EventResult": {
+        "type": "object",
+        "required": ["eventId", "status", "operationCount"],
+        "properties": {
+          "eventId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["SUCCEEDED", "FAILED"] },
+          "operationCount": { "type": "integer", "minimum": 0 },
+          "alreadyHandled": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

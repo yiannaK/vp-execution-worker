@@ -1,0 +1,18 @@
+{
+  "name": "vp-execution-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SQS consumer for isolated Visual Programming execution",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.js",
+    "start:http-demo": "VP_EVENT_TRANSPORT=http VP_HEALTH_PORT=9101 VP_BACKEND_BASE_URL=http://localhost:5000 VP_JWT_KEY_ID=vp-runner-2026-01 VP_JWT_PRIVATE_KEY_FILE=./vp-runner-private.pem VP_INBOUND_JWT_KEY_ID=vp-backend-events-dev-1 VP_INBOUND_JWT_PUBLIC_KEY_FILE=./vp-backend-events-public.pem node src/main.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.890.0"
+  }
+}

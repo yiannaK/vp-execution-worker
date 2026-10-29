@@ -1,0 +1,52 @@
+services:
+  vp-worker:
+    build: .
+    environment:
+      VP_EVENT_TRANSPORT: http
+      VP_PROGRAM_MODE: generated-js
+      VP_SANDBOX_URL: http://vp-sandbox:9200
+      VP_PROGRAM_DIRECTORY: /tmp/vp-programs
+      VP_HEALTH_PORT: 9101
+      VP_BACKEND_BASE_URL: http://host.docker.internal:5000
+      VP_JWT_PRIVATE_KEY_FILE: /run/secrets/vp-runner-private.pem
+      VP_JWT_KEY_ID: vp-runner-2026-01
+      VP_INBOUND_JWT_KEY_ID: vp-backend-events-dev-1
+      VP_INBOUND_JWT_PUBLIC_KEY_FILE: /run/secrets/vp-backend-events-public.pem
+    volumes:
+      - ./vp-runner-private.pem:/run/secrets/vp-runner-private.pem:ro
+      - ./vp-backend-events-public.pem:/run/secrets/vp-backend-events-public.pem:ro
+    ports:
+      - '127.0.0.1:9101:9101'
+    networks:
+      - default
+      - sandbox-control
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 0.50
+
+  vp-sandbox:
+    build:
+      context: .
+      dockerfile: sandbox/Dockerfile
+    environment:
+      VP_SANDBOX_PORT: 9200
+      VP_HOST_CALLBACK_URL: http://vp-worker:9101
+    networks:
+      - sandbox-control
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 50
+    mem_limit: 128m
+    cpus: 0.50
+
+networks:
+  sandbox-control:
+    internal: true

@@ -1,0 +1,24 @@
+services:
+  vp-worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      VP_BACKEND_BASE_URL: http://host.docker.internal:5000
+      VP_JWT_PRIVATE_KEY_FILE: /run/secrets/vp-runner-private.pem
+    volumes:
+      - ${HOME}/.aws:/home/node/.aws:ro
+      - ./vp-runner-private.pem:/run/secrets/vp-runner-private.pem:ro
+    ports:
+      - "127.0.0.1:9100:9100"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 0.50
+    restart: unless-stopped
